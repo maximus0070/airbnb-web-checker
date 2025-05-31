@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Airbnb 예약 현황</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            padding: 16px;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 1rem;
+        }
+        button {
+            font-size: 0.9rem;
+            padding: 6px 12px;
+            border: 1px solid #aaa;
+            border-radius: 6px;
+            background-color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #eaeaea;
+        }
+        .section {
+            margin-top: 1.5rem;
+        }
+        .room {
+            background: #fff;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        .room strong {
+            font-size: 1rem;
+        }
+        .dates {
+            font-size: 0.9rem;
+            color: #444;
+            display: block;
+            margin-top: 4px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 2px 6px;
+            background: #007bff;
+            color: white;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📅 Airbnb 예약 현황</h1>
+    <form method="post">
+        <button name="room_id" value="all">전체 확인</button>
+        {% for rid, rtype, rname in room_data %}
+            <button name="room_id" value="{{ rid }}">{{ rtype }} {{ rname }}</button>
+        {% endfor %}
+    </form>
+
+    {% if results %}
+    <div class="section">
+        <h2>✅ 결과</h2>
+        {% for rtype, rname, dates, count in results %}
+            <div class="room">
+                <strong>{{ rtype }} {{ rname }}</strong>
+                {% if dates and "오류 발생" not in dates[0] %}
+                    <span class="dates">총 {{ count }}일 예약됨</span>
+                    <span class="dates">{{ dates | join(', ') }}</span>
+                {% else %}
+                    <span class="dates">{{ dates[0] if dates else '예약 없음' }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</body>
+</html>
