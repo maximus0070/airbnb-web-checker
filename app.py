@@ -70,7 +70,7 @@ def get_reserved_dates(room_id):
 
 @app.route("/")
 def index():
-    return render_template("index.html", rooms=rooms)
+    return render_template("index.html", room_data=rooms, results=[])
 
 @app.route("/check/<room_id>")
 def check_room(room_id):
