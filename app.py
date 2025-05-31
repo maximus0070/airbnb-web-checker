@@ -1,13 +1,11 @@
-
-from flask import Flask, render_template, request
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
+from flask import Flask, render_template, request, jsonify
+import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
-import time
 
 app = Flask(__name__)
 
+# ✅ 객실 ID와 이름 매핑
 room_data = [
     ("1310456538491337564", "B/E", "#1 파인릴렉스(수퍼킹)"),
     ("1313524133477209346", "B/E", "#2 파인릴렉스(수퍼킹)"),
@@ -41,63 +39,43 @@ room_data = [
     ("1315154305924436167", "A/F", "#6 파인오션트레블 (투룸)")
 ]
 
+# ✅ 예약 날짜 크롤링 함수
 def get_reserved_dates(room_id):
     url = f"https://www.airbnb.co.kr/rooms/{room_id}#availability-calendar"
-    options = Options()
-    options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
-    options.add_argument('--lang=ko-KR')
-    options.add_argument('--window-size=1920,1080')
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/90.0.4430.212"
+    }
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
-    time.sleep(4)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-    time.sleep(2)
-    html = driver.page_source
-    driver.quit()
+        today = datetime.today()
+        reserved_dates = []
 
-    soup = BeautifulSoup(html, 'html.parser')
-    reserved_tags = soup.find_all(attrs={"data-is-day-blocked": "true"})
+        for tag in soup.find_all(attrs={"data-is-day-blocked": "true"}):
+            test_id = tag.get("data-testid", "")
+            if test_id.startswith("calendar-day-"):
+                date_str = test_id.replace("calendar-day-", "").strip(".")
+                try:
+                    date_obj = datetime.strptime(date_str, "%Y.%m.%d")
+                    if date_obj > today:
+                        reserved_dates.append(date_str)
+                except:
+                    continue
 
-    today = datetime.today()
-    reserved_dates = []
+        return reserved_dates
 
-    for tag in reserved_tags:
-        test_id = tag.get("data-testid", "")
-        if test_id.startswith("calendar-day-"):
-            date_str = test_id.replace("calendar-day-", "").strip(".")
-            try:
-                date_obj = datetime.strptime(date_str, "%Y.%m.%d")
-                if date_obj > today:
-                    reserved_dates.append(date_str)
-            except:
-                continue
+    except Exception as e:
+        return [f"❌ 오류: {e}"]
 
-    return sorted(set(reserved_dates))
-
-@app.route("/", methods=["GET", "POST"])
+@app.route("/")
 def index():
-    selected = request.form.get("room_id")
-    results = []
+    return render_template("index.html", rooms=rooms)
 
-    if selected == "all":
-        targets = room_data
-    elif selected:
-        targets = [r for r in room_data if r[0] == selected]
-    else:
-        targets = []
-
-    for room_id, rtype, rname in targets:
-        try:
-            dates = get_reserved_dates(room_id)
-        except Exception as e:
-            dates = [f"❌ 오류 발생: {e}"]
-        results.append((rtype, rname, dates, len(dates)))
-
-    return render_template("index.html", room_data=room_data, results=results)
+@app.route("/check/<room_id>")
+def check_room(room_id):
+    reserved = get_reserved_dates(room_id)
+    return jsonify({"room": rooms.get(room_id, room_id), "reserved": reserved, "count": len(reserved)})
 
 if __name__ == "__main__":
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
