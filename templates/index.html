@@ -12,8 +12,8 @@
 <body>
   <h2>🛏️ Airbnb 객실 예약 현황</h2>
   <div id="buttons">
-    {% for room_id, room_name in rooms.items() %}
-      <button class="room-button" onclick="checkRoom('{{ room_id }}', '{{ room_name }}')">{{ room_name }}</button>
+    {% for room_id, rtype, room_name in rooms %}
+      <button class="room-button" onclick="checkRoom('{{ room_id }}', '{{ rtype }} {{ room_name }}')">{{ rtype }} {{ room_name }}</button>
     {% endfor %}
   </div>
 

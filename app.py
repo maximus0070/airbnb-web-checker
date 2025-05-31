@@ -70,7 +70,8 @@ def get_reserved_dates(room_id):
 
 @app.route("/")
 def index():
-    return render_template("index.html", room_data=rooms, results=[])
+    # rooms는 리스트니까, 버튼 생성은 아래와 같이 넘겨주는 게 안전!
+    return render_template("index.html", rooms=rooms, results=[])
 
 @app.route("/check/<room_id>")
 def check_room(room_id):
