@@ -75,7 +75,9 @@ def index():
 @app.route("/check/<room_id>")
 def check_room(room_id):
     reserved = get_reserved_dates(room_id)
-    return jsonify({"room": rooms.get(room_id, room_id), "reserved": reserved, "count": len(reserved)})
+    # 객실명 찾아오기
+    room_name = next((rtype + " " + rname for rid, rtype, rname in rooms if rid == room_id), room_id)
+    return jsonify({"room": room_name, "reserved": reserved, "count": len(reserved)})
 
 if __name__ == "__main__":
     import os
